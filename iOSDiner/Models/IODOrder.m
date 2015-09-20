@@ -89,7 +89,7 @@
         
         if (intQuantity > 0)
             [[self getOrderItems] setObject:[NSNumber numberWithInt:intQuantity] forKey:key];
-        else
+        else	
             [[self getOrderItems] removeObjectForKey:key];
     }
     NSLog(@"All contents: %@", [self getOrderItems]);
