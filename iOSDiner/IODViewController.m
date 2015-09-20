@@ -225,7 +225,7 @@ dispatch_queue_t queue;
             [ibRemoveItemButton setEnabled:YES];
         }
         
-        if ([[order orderItems] count] == 0) {
+        if ([[order getOrderItems] count] == 0) {
             [ibTotalOrderButton setEnabled:NO];
         }
         else {
@@ -235,7 +235,7 @@ dispatch_queue_t queue;
 }
 
 - (void)updateOrderBoard {
-    if ([[order orderItems] count] == 0) {
+    if ([[order getOrderItems] count] == 0) {
         [ibChalkboardLabel setText:@"No Items. Please order something!"];
     }
     else {

@@ -13,22 +13,22 @@
 @synthesize orderItems;
 
 - (IODItem*)findKeyForOrderItem:(IODItem*)searchItem {
-    NSIndexSet* indexes = [[[self orderItems] allKeys] indexesOfObjectsPassingTest:^BOOL(id obj, NSUInteger idx, BOOL *stop) {
+    NSIndexSet* indexes = [[[self getOrderItems] allKeys] indexesOfObjectsPassingTest:^BOOL(id obj, NSUInteger idx, BOOL *stop) {
         IODItem* key = obj;
         
         return [[searchItem name] isEqualToString:[key name]] && 
-        [searchItem price] == [key price];
+        fabsf([searchItem price] - [key price])<0.01;
     }];
     
     if ([indexes count] >= 1) {
-        IODItem* key = [[[self orderItems] allKeys] objectAtIndex:[indexes firstIndex]];
+        IODItem* key = [[[self getOrderItems] allKeys] objectAtIndex:[indexes firstIndex]];
         return key;
     }
     
     return nil;
 }
 
-- (NSMutableDictionary *)orderItems{
+- (NSMutableDictionary *)getOrderItems{
     if (!orderItems) {
         orderItems = [NSMutableDictionary new];
     }
@@ -39,7 +39,7 @@
 - (NSString*)orderDescription {
     NSMutableString* orderDescription = [NSMutableString new];
     
-    NSArray* keys = [[[self orderItems] allKeys] sortedArrayUsingComparator:^NSComparisonResult(id obj1, id obj2) {
+    NSArray* keys = [[[self getOrderItems] allKeys] sortedArrayUsingComparator:^NSComparisonResult(id obj1, id obj2) {
         IODItem* item1 = (IODItem*)obj1;
         IODItem* item2 = (IODItem*)obj2;
         
@@ -48,11 +48,14 @@
     
     [keys enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
         IODItem* item = (IODItem*)obj;
-        NSNumber* quantity = (NSNumber*)[[self orderItems] objectForKey:item];
-        
-        [orderDescription appendFormat:@"%@ x%@\n",[item name],quantity];
+       // NSNumber* quantity = (NSNumber*)[[self getOrderItems] objectForKey:item];
+        IODItem* key =[self   findKeyForOrderItem:item];
+         NSNumber* quantity = (NSNumber*)[[self getOrderItems] objectForKey:key];
+        NSLog(@"%@,%d,%@",obj,idx,quantity);
+        [orderDescription appendFormat:@"%@ x%d\n",[item name],[quantity intValue]];
     }];
-    
+    NSLog(@"All contents: %@", [self getOrderItems]);
+
     return [orderDescription copy];
 }
 
@@ -60,31 +63,36 @@
     IODItem* key = [self findKeyForOrderItem:inItem];
     
     if (!key) {
-        [[self orderItems] setObject:[NSNumber numberWithInt:1] forKey:inItem];
+        [[self getOrderItems] setObject:[NSNumber numberWithInt:1] forKey:inItem];
     }
     else {
-        NSNumber* quantity = [[self orderItems] objectForKey:key];
+        NSNumber* quantity = [[self getOrderItems] objectForKey:key];
         int intQuantity = [quantity intValue];
         intQuantity++;
         
-        [[self orderItems] removeObjectForKey:key];
-        [[self orderItems] setObject:[NSNumber numberWithInt:intQuantity] forKey:key];
+        //[[self getOrderItems] removeObjectForKey:key];
+        [[self getOrderItems] setObject:[NSNumber numberWithInt:intQuantity] forKey:key];
     }
+    NSLog(@"All contents: %@", [self getOrderItems]);
+
 }
 
 - (void)removeItemFromOrder:(IODItem*)inItem {
     IODItem* key = [self findKeyForOrderItem:inItem];
     
     if (key) {
-        NSNumber* quantity = [[self orderItems] objectForKey:key];
+        NSNumber* quantity = [[self getOrderItems] objectForKey:key];
         int intQuantity = [quantity intValue];
         intQuantity--;
         
-        [[self orderItems] removeObjectForKey:key];
+       // [[self getOrderItems] removeObjectForKey:key];
         
         if (intQuantity > 0)
-            [[self orderItems] setObject:[NSNumber numberWithInt:intQuantity] forKey:key];
+            [[self getOrderItems] setObject:[NSNumber numberWithInt:intQuantity] forKey:key];
+        else
+            [[self getOrderItems] removeObjectForKey:key];
     }
+    NSLog(@"All contents: %@", [self getOrderItems]);
 }
 
 - (float)totalOrder {
@@ -93,7 +101,7 @@
         return price * quantity;
     };
     
-    [[self orderItems] enumerateKeysAndObjectsUsingBlock:^(id key, id obj, BOOL *stop) {
+    [[self getOrderItems] enumerateKeysAndObjectsUsingBlock:^(id key, id obj, BOOL *stop) {
         IODItem* item = (IODItem*)key;
         NSNumber* quantity = (NSNumber*)obj;
         int intQuantity = [quantity intValue];
